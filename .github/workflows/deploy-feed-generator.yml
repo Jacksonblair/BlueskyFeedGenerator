@@ -36,12 +36,13 @@ jobs:
       - name: Create directory on Azure VM
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa serveradmin@${{ env.PUBLIC_IP }} << 'EOF'
+            sudo rm -r /feedgenerator
             sudo mkdir -p /feedgenerator
           EOF
           
       - name: Deploy build to Azure VM
         run: |
-          scp -i ~/.ssh/id_rsa -r ./dist serveradmin@${{ env.PUBLIC_IP }}:/feedgenerator/
+          scp -i ~/.ssh/id_rsa -r ./dist serveradmin@${{ env.PUBLIC_IP }}:/feedgenerator
       
       - name: Run commands on Azure VM
         run: |
