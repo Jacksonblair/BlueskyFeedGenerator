@@ -32,7 +32,7 @@ jobs:
             if [ -d "/feedgenerator" ]; then
               sudo rm -rf /feedgenerator
             fi
-            git clone https://github.com/${{ github.repository }} /feedgenerator
+            sudo git clone https://github.com/${{ github.repository }} /feedgenerator
 
             # Change ownership to the current user
             sudo chown -R serveradmin:serveradmin /feedgenerator
