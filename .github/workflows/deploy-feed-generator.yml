@@ -26,20 +26,26 @@ jobs:
 
       - name: Build project
         run: yarn build
+        
+      - name: Write SSH private key to a file
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.AZURE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
       - name: Create directory on Azure VM
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.AZURE_SSH_PRIVATE_KEY }} username@${{ env.PUBLIC_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa serveradmin@${{ env.PUBLIC_IP }} << 'EOF'
             mkdir -p /feedgenerator
           EOF
           
       - name: Deploy build to Azure VM
         run: |
-          scp -i ${{ secrets.AZURE_SSH_PRIVATE_KEY }} -r ./dist username@${{ env.PUBLIC_IP }}:/feedgenerator/
+          scp -i ~/.ssh/id_rsa -r ./dist serveradmin@${{ env.PUBLIC_IP }}:/feedgenerator/
       
       - name: Run commands on Azure VM
         run: |
-          ssh -o StrictHostKeyChecking=no -i ${{ secrets.AZURE_SSH_PRIVATE_KEY }} username@${{ env.PUBLIC_IP }} << 'EOF'
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa serveradmin@${{ env.PUBLIC_IP }} << 'EOF'
             sudo apt update
             sudo apt install -y nodejs npm
             cd /feedgenerator
