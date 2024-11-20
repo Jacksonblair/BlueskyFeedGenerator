@@ -11,45 +11,34 @@ jobs:
     steps:
       - name: Setup variables
         run: echo "PUBLIC_IP=20.211.46.201" >> $GITHUB_ENV
-        
+
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Set up Node.js and Yarn
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'yarn'
-
-      - name: Install dependencies
-        run: yarn install
-
-      - name: Build project
-        run: yarn build
-        
       - name: Write SSH private key to a file
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.AZURE_SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Create directory on Azure VM
+      - name: Deploy repository to Azure VM
         run: |
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa serveradmin@${{ env.PUBLIC_IP }} << 'EOF'
-            sudo rm -r /feedgenerator
-            sudo mkdir -p /feedgenerator
-            sudo chown serveradmin:serveradmin /feedgenerator
-          EOF
-          
-      - name: Deploy build to Azure VM
-        run: |
-          scp -i ~/.ssh/id_rsa -r ./dist serveradmin@${{ env.PUBLIC_IP }}:/feedgenerator
-      
-      - name: Run commands on Azure VM
-        run: |
-          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa serveradmin@${{ env.PUBLIC_IP }} << 'EOF'
+            # Update and install dependencies
             sudo apt update
-            sudo apt install -y nodejs npm
+            sudo apt install -y nodejs npm yarn git
+
+            # Clone the repository
+            if [ -d "/feedgenerator" ]; then
+              sudo rm -rf /feedgenerator
+            fi
+            git clone https://github.com/${{ github.repository }} /feedgenerator
+
+            # Change ownership to the current user
+            sudo chown -R serveradmin:serveradmin /feedgenerator
+
+            # Install and start the application
             cd /feedgenerator
-            node.exe ./index.js
+            yarn install
+            yarn start
           EOF
