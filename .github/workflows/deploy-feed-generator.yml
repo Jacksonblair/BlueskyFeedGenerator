@@ -38,6 +38,7 @@ jobs:
           ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa serveradmin@${{ env.PUBLIC_IP }} << 'EOF'
             sudo rm -r /feedgenerator
             sudo mkdir -p /feedgenerator
+            sudo chown serveradmin:serveradmin /feedgenerator
           EOF
           
       - name: Deploy build to Azure VM
